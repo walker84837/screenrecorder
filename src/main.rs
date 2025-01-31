@@ -1,3 +1,4 @@
+use anyhow::Result;
 use log::info;
 use std::{
     sync::{
@@ -11,15 +12,15 @@ use std::{
 use crabgrab::prelude::*;
 
 #[tokio::main]
-async fn main() -> Result<(), dyn std::error::Error> {
-    SimpleLogger::new().init().unwrap();
+async fn main() -> Result<()> {
+    simple_logger::SimpleLogger::new().init().unwrap();
     start_recorder().await;
     loop {
         thread::yield_now();
     }
 }
 
-async fn start_recorder() -> Result<(), dyn std::error::Error> {
+async fn start_recorder() -> Result<()> {
     let fps = Arc::new(AtomicI32::new(0));
 
     let fps_loop = Arc::clone(&fps);
