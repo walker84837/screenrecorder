@@ -40,8 +40,14 @@ async fn start_recorder() -> Result<()> {
     let content = CapturableContent::new(filter).await?;
 
     let pixel_format = CaptureStream::supported_pixel_formats()[0];
-    info!("pixel format: {}", pixel_format);
-    let config = CaptureConfig::with_display(content.displays().next()?, pixel_format);
+    info!("pixel format: {:#?}", pixel_format);
+    let config = CaptureConfig::with_display(
+        content
+            .displays()
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("Expected at least one display"))?,
+        pixel_format,
+    );
 
     let fps_recorder = Arc::clone(&fps);
     loop {
