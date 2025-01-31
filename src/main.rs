@@ -1,32 +1,46 @@
-use std::{sync::{atomic::{AtomicI32, Ordering}, Arc}, thread, time::{Duration, Instant}};
+use log::info;
+use std::{
+    sync::{
+        atomic::{AtomicI32, Ordering},
+        Arc,
+    },
+    thread,
+    time::{Duration, Instant},
+};
 
-use crabgrab::prelude::{CapturableContent, CapturableContentFilter, CaptureConfig, CaptureStream};
+use crabgrab::prelude::*;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), dyn std::error::Error> {
+    SimpleLogger::new().init().unwrap();
     start_recorder().await;
-    loop { thread::yield_now(); }
+    loop {
+        thread::yield_now();
+    }
 }
 
-async fn start_recorder() {
+async fn start_recorder() -> Result<(), dyn std::error::Error> {
     let fps = Arc::new(AtomicI32::new(0));
-    
+
     let fps_loop = Arc::clone(&fps);
-    thread::spawn(move || {
-        loop {
-            println!("fps: {}", fps_loop.load(Ordering::Relaxed));
-            fps_loop.store(0, Ordering::Relaxed);
-            thread::sleep(Duration::from_secs(1));
-        }
+    thread::spawn(move || loop {
+        println!("fps: {}", fps_loop.load(Ordering::Relaxed));
+        fps_loop.store(0, Ordering::Relaxed);
+        thread::sleep(Duration::from_secs(1));
     });
 
     let token = match CaptureStream::test_access(false) {
         Some(token) => token,
-        None => CaptureStream::request_access(false).await.expect("Expected capture access")
+        None => CaptureStream::request_access(false)
+            .await
+            .expect("Expected capture access"),
     };
     let filter = CapturableContentFilter::EVERYTHING;
-    let content = CapturableContent::new(filter).await.unwrap();
-    let config = CaptureConfig::with_display(content.displays().next().unwrap(), CaptureStream::supported_pixel_formats()[0]);
+    let content = CapturableContent::new(filter).await?;
+
+    let pixel_format = CaptureStream::supported_pixel_formats()[0];
+    info!("pixel format: {}", pixel_format);
+    let config = CaptureConfig::with_display(content.displays().next()?, pixel_format);
 
     let fps_recorder = Arc::clone(&fps);
     loop {

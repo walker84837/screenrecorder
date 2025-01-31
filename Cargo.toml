@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
-crabgrab = { version = "0.4.0", features = ["screenshot"]}
+crabgrab = { version = "0.4.0", features = ["screenshot"] }
+log = "0.4.25"
+simple_logger = "5.0.0"
